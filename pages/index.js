@@ -5,6 +5,7 @@ import {
   ChakraProvider,
   Flex,
   IconButton,
+  Link,
   Spacer,
   Text,
   Textarea,
@@ -42,7 +43,9 @@ export default function Home() {
       px={{ base: "16px", md: "0" }}
     >
       <Text fontSize="24px" fontWeight="600">
-        X
+        <Link color="white" href="/">
+          X
+        </Link>
       </Text>
       <Spacer />
       {user ? (
