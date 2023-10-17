@@ -7,10 +7,12 @@ import {
   Spacer,
   Text,
   Textarea,
+  useToast,
 } from "@chakra-ui/react"
 import Head from "next/head"
 import { useEffect, useState } from "react"
 import { map } from "ramda"
+import { WriteIcon } from "@/components/images/icons/icons"
 
 const TweetCard = ({ tweet }) => (
   <Flex
@@ -38,7 +40,7 @@ const TweetCard = ({ tweet }) => (
         fontWeight="400"
         textAlign="left"
       >
-        {tweet.data.tweet}
+        {tweet.data.body}
       </Text>
     </Flex>
   </Flex>
@@ -50,6 +52,14 @@ export default function Home() {
   const [db, setDb] = useState(null)
   const [tweets, setTweets] = useState([])
   const [tweetPost, setTweetPost] = useState("")
+  const [user, setUser] = useState(null)
+  const [tab, setTab] = useState("all")
+  const tabs = [
+    { key: "all", name: "All" },
+    { key: "yours", name: "Yours" },
+  ]
+
+  const toast = useToast()
 
   const Navbar = () => (
     <Flex
@@ -65,7 +75,39 @@ export default function Home() {
         X
       </Text>
       <Spacer />
-      <Avatar bg="twitter.800" />
+      {user ? (
+        <>
+          <Avatar
+            bg="twitter.800"
+            onClick={() =>
+              toast({
+                description: "You are logged in",
+                status: "success",
+                duration: 5000,
+                isClosable: true,
+                position: "top",
+              })
+            }
+          />
+        </>
+      ) : (
+        <>
+          <WriteIcon
+            onClick={() =>
+              toast({
+                description: "Coming Soon",
+                status: "success",
+                duration: 5000,
+                isClosable: true,
+                position: "top",
+              })
+            }
+          />
+          <Button borderRadius="116px" onClick={login}>
+            Login
+          </Button>
+        </>
+      )}
     </Flex>
   )
 
@@ -81,7 +123,7 @@ export default function Home() {
 
   const fetchTweets = async () => {
     try {
-      const _tweets = await db.cget(COLLECTION_POSTS)
+      const _tweets = await db.cget(COLLECTION_POSTS, ["date", "desc"])
       setTweets(_tweets)
       console.log("_tweets", _tweets)
     } catch (e) {
@@ -89,8 +131,56 @@ export default function Home() {
     }
   }
 
+  const fetchUserTweets = async () => {
+    try {
+      const _tweets = await db.cget(
+        COLLECTION_POSTS,
+        ["date", "desc"],
+        ["user_wallet", "==", user.signer]
+      )
+      setTweets(_tweets)
+      console.log("_tweets", _tweets)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const login = async () => {
+    try {
+      const { tx, identity } = await db.createTempAddress()
+      console.log("login", tx)
+      setUser(identity)
+      toast({
+        description: "User logged in",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const addPost = async () => {
     try {
+      console.log("tweetPost", tweetPost)
+      const tx = await db.add(
+        { body: tweetPost, date: db.ts(), user_wallet: db.signer() },
+        COLLECTION_POSTS,
+        ...(user ? [user] : [])
+      )
+      console.log("addPost", tx)
+      if (tx.success) {
+        toast({
+          description: "Post added",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+        })
+        fetchTweets()
+      }
     } catch (e) {
       console.error(e)
     }
@@ -110,25 +200,32 @@ export default function Home() {
     }
   }
 
-  const addComment = async () => {
-    try {
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
   useEffect(() => {
     setupWeaveDB()
   }, [])
 
   useEffect(() => {
-    fetchTweets()
+    if (db) fetchTweets()
   }, [db])
+
+  useEffect(() => {
+    if (tab === "all") fetchTweets()
+    if (tab === "yours" && user) fetchUserTweets()
+    if (tab === "yours" && !user) {
+      toast({
+        description: "Please login",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      })
+    }
+  }, [tab])
 
   return (
     <>
       <Head>
-        <title>HackAtArch Demo</title>
+        <title>HackAtArch WeaveDB Demo</title>
         <meta name="description" content="HackAtArch WeaveDB Demo" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -164,31 +261,81 @@ export default function Home() {
                   fontWeight="500"
                   pl="14px"
                   placeholder="Post a tweet"
+                  onChange={(e) => setTweetPost(e.target.value)}
                 />
               </Flex>
 
               <Flex alignItems="center">
                 <Spacer />
-                <Button borderRadius="116px">Post</Button>
+                <Button borderRadius="116px" onClick={addPost}>
+                  Post
+                </Button>
               </Flex>
             </Flex>
 
+            {/* TABS */}
+            {user && (
+              <Flex px={{ base: "16px", md: "16px" }}>
+                <Flex
+                  padding="10px 16px"
+                  justifyContent="space-between"
+                  alignItems="flex-start"
+                  w="100%"
+                  borderRadius="116px"
+                  border="1px solid rgba(255, 255, 255, 0.40)"
+                >
+                  {map((_tab) => {
+                    return (
+                      <>
+                        <Flex
+                          onClick={() => setTab(_tab.key)}
+                          flexGrow="1"
+                          padding="8px"
+                          justifyContent="center"
+                          borderRadius="116px"
+                          backdropFilter="blur(48px)"
+                          background={
+                            tab === _tab.key ? "rgba(255, 255, 255, 0.20)" : ""
+                          }
+                        >
+                          <Text
+                            sx={{
+                              color: "rgba(255, 255, 255, 0.90)",
+                              textAlign: "center",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: "500",
+                              lineHeight: "normal",
+                            }}
+                          >
+                            {_tab.name}
+                          </Text>
+                        </Flex>
+                      </>
+                    )
+                  })(tabs)}
+                </Flex>
+              </Flex>
+            )}
+
             {/* TWEETS */}
-            {map((_tweet) => {
-              return (
-                <>
-                  <Flex
-                    w="100%"
-                    px="29px"
-                    flexDirection="column"
-                    alignItems="center"
-                    gap="28px"
-                  >
-                    <TweetCard tweet={_tweet} />
-                  </Flex>
-                </>
-              )
-            })(tweets)}
+            <Flex flexDirection="column" pb="58px">
+              {map((_tweet) => {
+                return (
+                  <>
+                    <Flex
+                      w="100%"
+                      px="29px"
+                      flexDirection="column"
+                      alignItems="center"
+                      py="18px"
+                    >
+                      <TweetCard tweet={_tweet} />
+                    </Flex>
+                  </>
+                )
+              })(tweets)}
+            </Flex>
           </Flex>
 
           <Flex flexGrow="1" />
