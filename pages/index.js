@@ -15,7 +15,7 @@ import Head from "next/head"
 import { useEffect, useState } from "react"
 import { map } from "ramda"
 import { WriteIcon } from "@/components/images/icons/icons"
-import { DeleteIcon, EditIcon } from "@chakra-ui/icons"
+import { CheckIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons"
 
 export default function Home() {
   const CONTRACT_TX_ID = "GS8W3JJBzC9WstwnDNMjy7E9VORPJlVBDW35OkUeSSI"
@@ -23,6 +23,7 @@ export default function Home() {
   const [db, setDb] = useState(null)
   const [tweets, setTweets] = useState([])
   const [tweetPost, setTweetPost] = useState("")
+  const [editingTweetId, setEditingTweetId] = useState(null)
   const [user, setUser] = useState(null)
   const [tab, setTab] = useState("all")
   const tabs = [
@@ -84,52 +85,109 @@ export default function Home() {
     </Flex>
   )
 
-  const TweetCard = ({ tweet }) => (
-    <Flex
-      w="100%"
-      borderRadius="16px"
-      bg="#282832"
-      backdropFilter="blur(48px)"
-      py="16px"
-      px="24px"
-      flexDirection="column"
-    >
-      {/* USER */}
-      <Flex alignItems="center" gap="8px">
-        <Avatar bg="twitter.800" />
-        <Text color="#D0D5DD" fontSize="16px" fontWeight="300" noOfLines={1}>
-          {tweet.setter}
-        </Text>
-      </Flex>
+  const TweetCard = ({ tweet }) => {
+    const [editedTweet, setEditedTweet] = useState(tweet.data.body)
 
-      {/* CONTENT */}
-      <Flex flexDirection="column" py="16px" gap="18px">
-        <Text
-          color="rgba(255, 255, 255, 0.90)"
-          fontSize="18px"
-          fontWeight="400"
-          textAlign="left"
-        >
-          {tweet.data.body}
-        </Text>
+    const updateTweet = async () => {
+      try {
+        console.log("tweetPost", editedTweet)
+        const tx = await db.update(
+          { body: editedTweet, date: db.ts() },
+          COLLECTION_POSTS,
+          editingTweetId,
+          ...(user ? [user] : [])
+        )
+        console.log("updateTweet", tx)
+        if (tx.success) {
+          fetchTweets()
+          toast({
+            description: "Tweet updated",
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+            position: "top",
+          })
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setEditingTweetId(null)
+      }
+    }
 
-        {/* BUTTONS */}
-        {user &&
-          (user.signer === tweet.setter ? (
-            <Flex justifyContent="flex-end">
-              <IconButton icon={<EditIcon />} colorScheme="none" />
-              <IconButton
-                icon={<DeleteIcon />}
-                colorScheme="none"
-                onClick={() => deletePost(tweet)}
-              />
-            </Flex>
+    const handleChange = (e) => {
+      setEditedTweet(e.target.value)
+    }
+
+    return (
+      <Flex
+        w="100%"
+        borderRadius="16px"
+        bg="#282832"
+        backdropFilter="blur(48px)"
+        py="16px"
+        px="24px"
+        flexDirection="column"
+      >
+        {/* USER */}
+        <Flex alignItems="center" gap="8px">
+          <Avatar bg="twitter.800" />
+          <Text color="#D0D5DD" fontSize="16px" fontWeight="300" noOfLines={1}>
+            {tweet.setter}
+          </Text>
+        </Flex>
+
+        {/* TweetCard CONTENT */}
+        <Flex flexDirection="column" py="16px" gap="18px">
+          {editingTweetId === tweet.id ? (
+            <Textarea
+              value={editedTweet}
+              color="#667085"
+              fontSize="18px"
+              fontWeight="500"
+              pl="14px"
+              onChange={handleChange}
+            />
           ) : (
-            <></>
-          ))}
+            <Text
+              color="rgba(255, 255, 255, 0.90)"
+              fontSize="18px"
+              fontWeight="400"
+              textAlign="left"
+            >
+              {tweet.data.body}
+            </Text>
+          )}
+
+          {/* TweetCard BUTTONS */}
+          {user &&
+            (user.signer === tweet.setter ? (
+              <Flex justifyContent="flex-end">
+                <IconButton
+                  icon={<EditIcon />}
+                  colorScheme="none"
+                  onClick={() => editPost(tweet)}
+                />
+                {editingTweetId === tweet.id && (
+                  <IconButton
+                    icon={<CheckIcon />}
+                    colorScheme="none"
+                    onClick={() => updateTweet()}
+                  />
+                )}
+                <IconButton
+                  icon={<DeleteIcon />}
+                  colorScheme="none"
+                  onClick={() => deletePost(tweet)}
+                />
+              </Flex>
+            ) : (
+              <></>
+            ))}
+        </Flex>
       </Flex>
-    </Flex>
-  )
+    )
+  }
 
   const setupWeaveDB = async () => {
     try {
@@ -206,6 +264,7 @@ export default function Home() {
       )
       console.log("addPost", tx)
       if (tx.success) {
+        fetchTweets()
         toast({
           description: "Post added",
           status: "success",
@@ -213,18 +272,21 @@ export default function Home() {
           isClosable: true,
           position: "top",
         })
-        fetchTweets()
       }
     } catch (e) {
       console.error(e)
     }
   }
 
-  const editPost = async () => {
-    try {
-    } catch (e) {
-      console.error(e)
-    }
+  const editPost = async (tweet) => {
+    setEditingTweetId(tweet.id)
+    toast({
+      description: "Editing post",
+      status: "warning",
+      duration: 5000,
+      isClosable: true,
+      position: "top",
+    })
   }
 
   const deletePost = async (tweet) => {
