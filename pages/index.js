@@ -4,6 +4,7 @@ import {
   Button,
   ChakraProvider,
   Flex,
+  IconButton,
   Spacer,
   Text,
   Textarea,
@@ -13,38 +14,7 @@ import Head from "next/head"
 import { useEffect, useState } from "react"
 import { map } from "ramda"
 import { WriteIcon } from "@/components/images/icons/icons"
-
-const TweetCard = ({ tweet }) => (
-  <Flex
-    w="100%"
-    borderRadius="16px"
-    bg="#282832"
-    backdropFilter="blur(48px)"
-    py="16px"
-    px="24px"
-    flexDirection="column"
-  >
-    {/* USER */}
-    <Flex alignItems="center" gap="8px">
-      <Avatar bg="twitter.800" />
-      <Text color="#D0D5DD" fontSize="16px" fontWeight="300" noOfLines={1}>
-        {tweet.setter}
-      </Text>
-    </Flex>
-
-    {/* CONTENT */}
-    <Flex flexDirection="column" py="16px">
-      <Text
-        color="rgba(255, 255, 255, 0.90)"
-        fontSize="18px"
-        fontWeight="400"
-        textAlign="left"
-      >
-        {tweet.data.body}
-      </Text>
-    </Flex>
-  </Flex>
-)
+import { DeleteIcon, EditIcon } from "@chakra-ui/icons"
 
 export default function Home() {
   const CONTRACT_TX_ID = "GS8W3JJBzC9WstwnDNMjy7E9VORPJlVBDW35OkUeSSI"
@@ -111,6 +81,53 @@ export default function Home() {
     </Flex>
   )
 
+  const TweetCard = ({ tweet }) => (
+    <Flex
+      w="100%"
+      borderRadius="16px"
+      bg="#282832"
+      backdropFilter="blur(48px)"
+      py="16px"
+      px="24px"
+      flexDirection="column"
+    >
+      {/* USER */}
+      <Flex alignItems="center" gap="8px">
+        <Avatar bg="twitter.800" />
+        <Text color="#D0D5DD" fontSize="16px" fontWeight="300" noOfLines={1}>
+          {tweet.setter}
+        </Text>
+      </Flex>
+
+      {/* CONTENT */}
+      <Flex flexDirection="column" py="16px" gap="18px">
+        <Text
+          color="rgba(255, 255, 255, 0.90)"
+          fontSize="18px"
+          fontWeight="400"
+          textAlign="left"
+        >
+          {tweet.data.body}
+        </Text>
+
+        {/* BUTTONS */}
+        {user &&
+          (user.signer === tweet.setter ? (
+            <Flex justifyContent="flex-end">
+              <IconButton icon={<EditIcon />} colorScheme="none" />
+              <IconButton
+                icon={<DeleteIcon />}
+                colorScheme="none"
+                onClick={() => deletePost(tweet)}
+              />
+            </Flex>
+          ) : (
+            <></>
+          ))}
+      </Flex>
+    </Flex>
+  )
+
   const setupWeaveDB = async () => {
     try {
       const _db = new WeaveDB({ contractTxId: CONTRACT_TX_ID })
@@ -122,6 +139,20 @@ export default function Home() {
   }
 
   const fetchTweets = async () => {
+    if (tab === "all") fetchAllTweets()
+    if (tab === "yours" && user) fetchUserTweets()
+    if (tab === "yours" && !user) {
+      toast({
+        description: "Please login",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      })
+    }
+  }
+
+  const fetchAllTweets = async () => {
     try {
       const _tweets = await db.cget(COLLECTION_POSTS, ["date", "desc"])
       setTweets(_tweets)
@@ -193,8 +224,24 @@ export default function Home() {
     }
   }
 
-  const deletePost = async () => {
+  const deletePost = async (tweet) => {
     try {
+      const tx = await db.delete(
+        COLLECTION_POSTS,
+        tweet.id,
+        ...(user ? [user] : [])
+      )
+      console.log("deletePost", tx)
+      if (tx.success) {
+        fetchTweets()
+        toast({
+          description: "Post deleted",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+        })
+      }
     } catch (e) {
       console.error(e)
     }
@@ -209,17 +256,7 @@ export default function Home() {
   }, [db])
 
   useEffect(() => {
-    if (tab === "all") fetchTweets()
-    if (tab === "yours" && user) fetchUserTweets()
-    if (tab === "yours" && !user) {
-      toast({
-        description: "Please login",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-        position: "top",
-      })
-    }
+    fetchTweets()
   }, [tab])
 
   return (
@@ -242,9 +279,10 @@ export default function Home() {
             minH="100%"
             gap="24px"
           >
+            {/* NAVBAR */}
             <Navbar />
 
-            {/* TWEET */}
+            {/* POST SECTION */}
             <Flex
               flexDirection="column"
               px={{ base: "16px", md: "0" }}
@@ -273,7 +311,7 @@ export default function Home() {
               </Flex>
             </Flex>
 
-            {/* TABS */}
+            {/* TAB SECTION*/}
             {user && (
               <Flex px={{ base: "16px", md: "16px" }}>
                 <Flex
@@ -318,7 +356,7 @@ export default function Home() {
               </Flex>
             )}
 
-            {/* TWEETS */}
+            {/* TWEET SECTION */}
             <Flex flexDirection="column" pb="58px">
               {map((_tweet) => {
                 return (
