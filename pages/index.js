@@ -14,7 +14,12 @@ import {
 import Head from "next/head"
 import { useEffect, useState } from "react"
 import { map } from "ramda"
-import { CheckIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons"
+import {
+  CheckIcon,
+  DeleteIcon,
+  EditIcon,
+  SmallCloseIcon,
+} from "@chakra-ui/icons"
 
 export default function Home() {
   const CONTRACT_TX_ID = "GS8W3JJBzC9WstwnDNMjy7E9VORPJlVBDW35OkUeSSI"
@@ -22,7 +27,6 @@ export default function Home() {
   const [db, setDb] = useState(null)
   const [posts, setPosts] = useState([])
   const [post, setPost] = useState("")
-  const [editingTweetId, setEditingTweetId] = useState(null)
   const [user, setUser] = useState(null)
 
   const [tab, setTab] = useState("all")
@@ -75,6 +79,7 @@ export default function Home() {
   )
 
   const PostCard = ({ post }) => {
+    const [isEditing, setIsEditing] = useState(false)
     const [editedPost, setEditedPost] = useState(post.data.body)
 
     const updatePost = async () => {
@@ -83,7 +88,7 @@ export default function Home() {
         const tx = await db.update(
           { body: editedPost, date: db.ts() },
           COLLECTION_POSTS,
-          editingTweetId,
+          post.id,
           ...(user ? [user] : [])
         )
         console.log("updatePost", tx)
@@ -99,13 +104,16 @@ export default function Home() {
         }
       } catch (e) {
         console.error(e)
-      } finally {
-        setEditingTweetId(null)
       }
     }
 
     const handleChange = (e) => {
       setEditedPost(e.target.value)
+    }
+
+    const handleEditStatus = () => {
+      setEditedPost(post.data.body)
+      setIsEditing(!isEditing)
     }
 
     return (
@@ -128,13 +136,13 @@ export default function Home() {
 
         {/* CARD CONTENT */}
         <Flex flexDirection="column" py="16px" gap="18px">
-          {editingTweetId === post.id ? (
+          {isEditing ? (
             <Textarea
-              value={editedPost}
               color="#667085"
               fontSize="18px"
               fontWeight="500"
               pl="14px"
+              value={editedPost}
               onChange={handleChange}
             />
           ) : (
@@ -152,16 +160,28 @@ export default function Home() {
           {user &&
             (user.signer === post.setter ? (
               <Flex justifyContent="flex-end">
-                <IconButton
-                  icon={<EditIcon />}
-                  colorScheme="none"
-                  onClick={() => editPost(post)}
-                />
-                {editingTweetId === post.id && (
+                {isEditing ? (
+                  <>
+                    <IconButton
+                      icon={<SmallCloseIcon />}
+                      colorScheme="none"
+                      onClick={handleEditStatus}
+                    >
+                      Save
+                    </IconButton>
+                    <IconButton
+                      icon={<CheckIcon />}
+                      colorScheme="none"
+                      onClick={updatePost}
+                    >
+                      Save
+                    </IconButton>
+                  </>
+                ) : (
                   <IconButton
-                    icon={<CheckIcon />}
+                    icon={<EditIcon />}
                     colorScheme="none"
-                    onClick={() => updatePost()}
+                    onClick={handleEditStatus}
                   />
                 )}
                 <IconButton
@@ -265,17 +285,6 @@ export default function Home() {
     } catch (e) {
       console.error(e)
     }
-  }
-
-  const editPost = async (post) => {
-    setEditingTweetId(post.id)
-    toast({
-      description: "Editing post",
-      status: "warning",
-      duration: 5000,
-      isClosable: true,
-      position: "top",
-    })
   }
 
   const deletePost = async (post) => {
