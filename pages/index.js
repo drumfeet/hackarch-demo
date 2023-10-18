@@ -14,17 +14,17 @@ import {
 import Head from "next/head"
 import { useEffect, useState } from "react"
 import { map } from "ramda"
-import { WriteIcon } from "@/components/images/icons/icons"
 import { CheckIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons"
 
 export default function Home() {
   const CONTRACT_TX_ID = "GS8W3JJBzC9WstwnDNMjy7E9VORPJlVBDW35OkUeSSI"
   const COLLECTION_POSTS = "posts"
   const [db, setDb] = useState(null)
-  const [tweets, setTweets] = useState([])
-  const [tweetPost, setTweetPost] = useState("")
+  const [posts, setPosts] = useState([])
+  const [post, setPost] = useState("")
   const [editingTweetId, setEditingTweetId] = useState(null)
   const [user, setUser] = useState(null)
+
   const [tab, setTab] = useState("all")
   const tabs = [
     { key: "all", name: "All" },
@@ -66,17 +66,6 @@ export default function Home() {
         </>
       ) : (
         <>
-          <WriteIcon
-            onClick={() =>
-              toast({
-                description: "Coming Soon",
-                status: "success",
-                duration: 5000,
-                isClosable: true,
-                position: "top",
-              })
-            }
-          />
           <Button borderRadius="116px" onClick={login}>
             Login
           </Button>
@@ -85,23 +74,23 @@ export default function Home() {
     </Flex>
   )
 
-  const TweetCard = ({ tweet }) => {
-    const [editedTweet, setEditedTweet] = useState(tweet.data.body)
+  const PostCard = ({ post }) => {
+    const [editedPost, setEditedPost] = useState(post.data.body)
 
-    const updateTweet = async () => {
+    const updatePost = async () => {
       try {
-        console.log("tweetPost", editedTweet)
+        console.log("editedPost", editedPost)
         const tx = await db.update(
-          { body: editedTweet, date: db.ts() },
+          { body: editedPost, date: db.ts() },
           COLLECTION_POSTS,
           editingTweetId,
           ...(user ? [user] : [])
         )
-        console.log("updateTweet", tx)
+        console.log("updatePost", tx)
         if (tx.success) {
-          fetchTweets()
+          fetchPosts()
           toast({
-            description: "Tweet updated",
+            description: "Post updated",
             status: "success",
             duration: 5000,
             isClosable: true,
@@ -116,7 +105,7 @@ export default function Home() {
     }
 
     const handleChange = (e) => {
-      setEditedTweet(e.target.value)
+      setEditedPost(e.target.value)
     }
 
     return (
@@ -133,15 +122,15 @@ export default function Home() {
         <Flex alignItems="center" gap="8px">
           <Avatar bg="twitter.800" />
           <Text color="#D0D5DD" fontSize="16px" fontWeight="300" noOfLines={1}>
-            {tweet.setter}
+            {post.setter}
           </Text>
         </Flex>
 
-        {/* TweetCard CONTENT */}
+        {/* CARD CONTENT */}
         <Flex flexDirection="column" py="16px" gap="18px">
-          {editingTweetId === tweet.id ? (
+          {editingTweetId === post.id ? (
             <Textarea
-              value={editedTweet}
+              value={editedPost}
               color="#667085"
               fontSize="18px"
               fontWeight="500"
@@ -155,30 +144,30 @@ export default function Home() {
               fontWeight="400"
               textAlign="left"
             >
-              {tweet.data.body}
+              {post.data.body}
             </Text>
           )}
 
-          {/* TweetCard BUTTONS */}
+          {/* CARD BUTTONS */}
           {user &&
-            (user.signer === tweet.setter ? (
+            (user.signer === post.setter ? (
               <Flex justifyContent="flex-end">
                 <IconButton
                   icon={<EditIcon />}
                   colorScheme="none"
-                  onClick={() => editPost(tweet)}
+                  onClick={() => editPost(post)}
                 />
-                {editingTweetId === tweet.id && (
+                {editingTweetId === post.id && (
                   <IconButton
                     icon={<CheckIcon />}
                     colorScheme="none"
-                    onClick={() => updateTweet()}
+                    onClick={() => updatePost()}
                   />
                 )}
                 <IconButton
                   icon={<DeleteIcon />}
                   colorScheme="none"
-                  onClick={() => deletePost(tweet)}
+                  onClick={() => deletePost(post)}
                 />
               </Flex>
             ) : (
@@ -199,9 +188,9 @@ export default function Home() {
     }
   }
 
-  const fetchTweets = async () => {
-    if (tab === "all") fetchAllTweets()
-    if (tab === "yours" && user) fetchUserTweets()
+  const fetchPosts = async () => {
+    if (tab === "all") fetchAllPosts()
+    if (tab === "yours" && user) fetchUserPosts()
     if (tab === "yours" && !user) {
       toast({
         description: "Please login",
@@ -213,25 +202,25 @@ export default function Home() {
     }
   }
 
-  const fetchAllTweets = async () => {
+  const fetchAllPosts = async () => {
     try {
-      const _tweets = await db.cget(COLLECTION_POSTS, ["date", "desc"])
-      setTweets(_tweets)
-      console.log("_tweets", _tweets)
+      const _posts = await db.cget(COLLECTION_POSTS, ["date", "desc"])
+      setPosts(_posts)
+      console.log("_posts", _posts)
     } catch (e) {
       console.error(e)
     }
   }
 
-  const fetchUserTweets = async () => {
+  const fetchUserPosts = async () => {
     try {
-      const _tweets = await db.cget(
+      const _posts = await db.cget(
         COLLECTION_POSTS,
         ["date", "desc"],
         ["user_wallet", "==", user.signer]
       )
-      setTweets(_tweets)
-      console.log("_tweets", _tweets)
+      setPosts(_posts)
+      console.log("_posts", _posts)
     } catch (e) {
       console.error(e)
     }
@@ -256,15 +245,15 @@ export default function Home() {
 
   const addPost = async () => {
     try {
-      console.log("tweetPost", tweetPost)
+      console.log("post", post)
       const tx = await db.add(
-        { body: tweetPost, date: db.ts(), user_wallet: db.signer() },
+        { body: post, date: db.ts(), user_wallet: db.signer() },
         COLLECTION_POSTS,
         ...(user ? [user] : [])
       )
       console.log("addPost", tx)
       if (tx.success) {
-        fetchTweets()
+        fetchPosts()
         toast({
           description: "Post added",
           status: "success",
@@ -278,8 +267,8 @@ export default function Home() {
     }
   }
 
-  const editPost = async (tweet) => {
-    setEditingTweetId(tweet.id)
+  const editPost = async (post) => {
+    setEditingTweetId(post.id)
     toast({
       description: "Editing post",
       status: "warning",
@@ -289,16 +278,16 @@ export default function Home() {
     })
   }
 
-  const deletePost = async (tweet) => {
+  const deletePost = async (post) => {
     try {
       const tx = await db.delete(
         COLLECTION_POSTS,
-        tweet.id,
+        post.id,
         ...(user ? [user] : [])
       )
       console.log("deletePost", tx)
       if (tx.success) {
-        fetchTweets()
+        fetchPosts()
         toast({
           description: "Post deleted",
           status: "success",
@@ -317,11 +306,11 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    if (db) fetchTweets()
+    if (db) fetchPosts()
   }, [db])
 
   useEffect(() => {
-    fetchTweets()
+    fetchPosts()
   }, [tab])
 
   return (
@@ -363,8 +352,8 @@ export default function Home() {
                   fontSize="18px"
                   fontWeight="500"
                   pl="14px"
-                  placeholder="Post a tweet"
-                  onChange={(e) => setTweetPost(e.target.value)}
+                  placeholder="What is happening?!"
+                  onChange={(e) => setPost(e.target.value)}
                 />
               </Flex>
 
@@ -421,9 +410,9 @@ export default function Home() {
               </Flex>
             )}
 
-            {/* TWEET SECTION */}
+            {/* CARDS SECTION */}
             <Flex flexDirection="column" pb="58px">
-              {map((_tweet) => {
+              {map((_post) => {
                 return (
                   <>
                     <Flex
@@ -433,11 +422,11 @@ export default function Home() {
                       alignItems="center"
                       py="18px"
                     >
-                      <TweetCard tweet={_tweet} />
+                      <PostCard post={_post} />
                     </Flex>
                   </>
                 )
-              })(tweets)}
+              })(posts)}
             </Flex>
           </Flex>
 
