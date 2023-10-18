@@ -22,7 +22,7 @@ import {
 } from "@chakra-ui/icons"
 
 export default function Home() {
-  const CONTRACT_TX_ID = "GS8W3JJBzC9WstwnDNMjy7E9VORPJlVBDW35OkUeSSI"
+  const CONTRACT_TX_ID = "B2waZRmr5PVfH7JL1HiUgBm0W4frXqijxy582M89srw"
   const COLLECTION_POSTS = "posts"
   const [db, setDb] = useState(null)
   const [posts, setPosts] = useState([])
@@ -219,8 +219,6 @@ export default function Home() {
     try {
       const _db = new WeaveDB({
         contractTxId: CONTRACT_TX_ID,
-        remoteStateSyncEnabled: true,
-        remoteStateSyncSource: "https://dre-3.warp.cc/contract",
       })
       await _db.init()
       setDb(_db)
