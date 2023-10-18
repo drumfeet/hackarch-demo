@@ -230,9 +230,9 @@ export default function Home() {
 
   const fetchAllPosts = async () => {
     try {
-      const _posts = await db.cget(COLLECTION_POSTS, ["date", "desc"])
+      const _posts = await db.cget(COLLECTION_POSTS)
       setPosts(_posts)
-      console.log("_posts", _posts)
+      console.log("fetchAllPosts", _posts)
     } catch (e) {
       console.error(e)
     }
@@ -240,13 +240,13 @@ export default function Home() {
 
   const fetchUserPosts = async () => {
     try {
-      const _posts = await db.cget(
-        COLLECTION_POSTS,
-        ["date", "desc"],
-        ["user_wallet", "==", user.signer]
-      )
+      const _posts = await db.cget(COLLECTION_POSTS, [
+        "user_wallet",
+        "==",
+        user.signer,
+      ])
       setPosts(_posts)
-      console.log("_posts", _posts)
+      console.log("fetchUserPosts", _posts)
     } catch (e) {
       console.error(e)
     }

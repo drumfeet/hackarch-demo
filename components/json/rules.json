@@ -1,6 +1,6 @@
 {
   "let create": {
-    "resource.newData.date": {
+    "resource.newData.block": {
       "var": "request.block"
     },
     "resource.newData.user_wallet": {
@@ -10,7 +10,7 @@
   },
 
   "let update": {
-    "resource.newData.date": {
+    "resource.newData.block": {
       "var": "request.block"
     },
     "resource.newData.user_wallet": {
