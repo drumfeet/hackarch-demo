@@ -103,8 +103,23 @@ export default function Home() {
             isClosable: true,
             position: "top",
           })
+        } else {
+          toast({
+            description: `Error: ${tx.error}`,
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+            position: "top",
+          })
         }
       } catch (e) {
+        toast({
+          description: `Error: ${e}`,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+        })
         console.error(e)
       }
     }
@@ -210,6 +225,13 @@ export default function Home() {
       await _db.init()
       setDb(_db)
     } catch (e) {
+      toast({
+        description: `Error: ${e}`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      })
       console.error(e)
     }
   }
@@ -234,6 +256,13 @@ export default function Home() {
       setPosts(_posts)
       console.log("fetchAllPosts", _posts)
     } catch (e) {
+      toast({
+        description: `Error: ${e}`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      })
       console.error(e)
     }
   }
@@ -248,6 +277,13 @@ export default function Home() {
       setPosts(_posts)
       console.log("fetchUserPosts", _posts)
     } catch (e) {
+      toast({
+        description: `Error: ${e}`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      })
       console.error(e)
     }
   }
@@ -265,6 +301,13 @@ export default function Home() {
         position: "top",
       })
     } catch (e) {
+      toast({
+        description: `Error: ${e}`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      })
       console.error(e)
     }
   }
@@ -290,8 +333,23 @@ export default function Home() {
           isClosable: true,
           position: "top",
         })
+      } else {
+        toast({
+          description: `Error: ${tx.error}`,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+        })
       }
     } catch (e) {
+      toast({
+        description: `Error: ${e}`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      })
       console.error(e)
     }
   }
@@ -313,8 +371,23 @@ export default function Home() {
           isClosable: true,
           position: "top",
         })
+      } else {
+        toast({
+          description: `Error: ${tx.error}`,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+        })
       }
     } catch (e) {
+      toast({
+        description: `Error: ${e}`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      })
       console.error(e)
     }
   }
