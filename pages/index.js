@@ -325,11 +325,7 @@ export default function Home() {
 
   useEffect(() => {
     if (db) fetchPosts()
-  }, [db])
-
-  useEffect(() => {
-    fetchPosts()
-  }, [tab])
+  }, [db, tab])
 
   return (
     <>
