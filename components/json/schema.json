@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "required": ["body"],
+  "properties": {
+    "body": {
+      "type": "string"
+    },
+    "block": {
+      "type": "object"
+    },
+    "user_wallet": {
+      "type": "string"
+    },
+    "is_edited": {
+      "type": "boolean"
+    }
+  }
+}

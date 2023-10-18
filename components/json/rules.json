@@ -1,0 +1,61 @@
+{
+  "let create": {
+    "resource.newData.date": {
+      "var": "request.block"
+    },
+    "resource.newData.user_wallet": {
+      "var": "request.auth.signer"
+    },
+    "resource.newData.is_edited": false
+  },
+
+  "let update": {
+    "resource.newData.date": {
+      "var": "request.block"
+    },
+    "resource.newData.user_wallet": {
+      "var": "request.auth.signer"
+    },
+    "resource.newData.is_edited": true
+  },
+
+  "allow create": {
+    "and": [
+      { "!=": [{ "var": "request.auth.signer" }, null] },
+      {
+        "==": [
+          { "var": "request.auth.signer" },
+          { "var": "resource.newData.user_wallet" }
+        ]
+      },
+      {
+        "==": [{ "var": "request.block" }, { "var": "resource.newData.block" }]
+      },
+      {
+        "==": [{ "var": "resource.newData.is_edited" }, false]
+      }
+    ]
+  },
+
+  "allow update": {
+    "and": [
+      { "!=": [{ "var": "request.auth.signer" }, null] },
+      {
+        "==": [
+          { "var": "request.auth.signer" },
+          { "var": "resource.newData.user_wallet" }
+        ]
+      },
+      {
+        "==": [{ "var": "request.block" }, { "var": "resource.newData.block" }]
+      },
+      {
+        "==": [{ "var": "resource.newData.is_edited" }, true]
+      }
+    ]
+  },
+
+  "allow delete": {
+    "==": [{ "var": "request.auth.signer" }, { "var": "resource.setter" }]
+  }
+}

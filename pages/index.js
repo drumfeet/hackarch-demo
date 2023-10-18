@@ -86,7 +86,9 @@ export default function Home() {
       try {
         console.log("editedPost", editedPost)
         const tx = await db.update(
-          { body: editedPost, date: db.ts() },
+          {
+            body: editedPost,
+          },
           COLLECTION_POSTS,
           post.id,
           ...(user ? [user] : [])
@@ -200,7 +202,11 @@ export default function Home() {
 
   const setupWeaveDB = async () => {
     try {
-      const _db = new WeaveDB({ contractTxId: CONTRACT_TX_ID })
+      const _db = new WeaveDB({
+        contractTxId: CONTRACT_TX_ID,
+        remoteStateSyncEnabled: true,
+        remoteStateSyncSource: "https://dre-3.warp.cc/contract",
+      })
       await _db.init()
       setDb(_db)
     } catch (e) {
@@ -267,12 +273,15 @@ export default function Home() {
     try {
       console.log("post", post)
       const tx = await db.add(
-        { body: post, date: db.ts(), user_wallet: db.signer() },
+        {
+          body: post,
+        },
         COLLECTION_POSTS,
         ...(user ? [user] : [])
       )
       console.log("addPost", tx)
       if (tx.success) {
+        setPost("")
         fetchPosts()
         toast({
           description: "Post added",
@@ -362,6 +371,7 @@ export default function Home() {
                   fontWeight="500"
                   pl="14px"
                   placeholder="What is happening?!"
+                  value={post}
                   onChange={(e) => setPost(e.target.value)}
                 />
               </Flex>
