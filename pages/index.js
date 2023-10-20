@@ -22,14 +22,22 @@ import {
 } from "@chakra-ui/icons"
 
 export default function Home() {
+  // Constants and state variables
   const CONTRACT_TX_ID = "B2waZRmr5PVfH7JL1HiUgBm0W4frXqijxy582M89srw"
   const COLLECTION_POSTS = "posts"
+
+  // State variable storing the weavedb-sdk object
   const [db, setDb] = useState(null)
+  // State to store an array of posts
   const [posts, setPosts] = useState([])
+  // State to store the content of a single post
   const [post, setPost] = useState("")
+  // State to store user wallet information
   const [user, setUser] = useState(null)
 
+  // State to manage the current tab selection
   const [tab, setTab] = useState("all")
+  // Array of available tabs with their keys and display names
   const tabs = [
     { key: "all", name: "All" },
     { key: "yours", name: "Yours" },
@@ -53,11 +61,14 @@ export default function Home() {
         </Link>
       </Text>
       <Spacer />
+      {/* Check if the 'user' object exists */}
       {user ? (
         <>
+          {/* Display an Avatar when the user is logged in */}
           <Avatar
             bg="twitter.800"
             onClick={() =>
+              // Show a toast notification when the Avatar is clicked
               toast({
                 description: "You are logged in",
                 status: "success",
@@ -70,6 +81,7 @@ export default function Home() {
         </>
       ) : (
         <>
+          {/* Display a Login button when the user is not logged in */}
           <Button borderRadius="116px" onClick={login}>
             Login
           </Button>
@@ -79,12 +91,15 @@ export default function Home() {
   )
 
   const PostCard = ({ post }) => {
+    // State to track whether the post is currently being edited
     const [isEditing, setIsEditing] = useState(false)
+    // State to hold the edited content of the post
     const [editedPost, setEditedPost] = useState(post.data.body)
 
     const updatePost = async () => {
       try {
         console.log("editedPost", editedPost)
+        // WeaveDB SDK query to perform the database update
         const tx = await db.update(
           {
             body: editedPost,
@@ -94,7 +109,9 @@ export default function Home() {
           ...(user ? [user] : [])
         )
         console.log("updatePost", tx)
+        // Check if the update was successful
         if (tx.success) {
+          // Fetch the updated list of posts
           fetchPosts()
           toast({
             description: "Post updated",
@@ -147,12 +164,15 @@ export default function Home() {
         <Flex alignItems="center" gap="8px">
           <Avatar bg="twitter.800" />
           <Text color="#D0D5DD" fontSize="16px" fontWeight="300" noOfLines={1}>
+            {/* display the wallet address of the original creator of the document */}
             {post.setter}
           </Text>
         </Flex>
 
         {/* CARD CONTENT */}
         <Flex flexDirection="column" py="16px" gap="18px">
+          {/* - If 'isEditing' is true, a Textarea is displayed for editing the 'editedPost'
+              - Otherwise, the post body is displayed as static text */}
           {isEditing ? (
             <Textarea
               color="#667085"
@@ -174,6 +194,9 @@ export default function Home() {
           )}
 
           {/* CARD BUTTONS */}
+          {/*   - If 'isEditing' is true, shows 'Close' and 'Save' buttons to manage the editing state.
+                - Otherwise, displays an 'Edit' button to initiate editing.
+                - A 'Delete' button is always displayed to remove the post. */}
           {user &&
             (user.signer === post.setter ? (
               <Flex justifyContent="flex-end">
@@ -215,6 +238,7 @@ export default function Home() {
     )
   }
 
+  // Initialize WeaveDB
   const setupWeaveDB = async () => {
     try {
       const _db = new WeaveDB({
@@ -234,6 +258,7 @@ export default function Home() {
     }
   }
 
+  // Fetch posts based on the active tab
   const fetchPosts = async () => {
     if (tab === "all") fetchAllPosts()
     if (tab === "yours" && user) fetchUserPosts()
@@ -248,8 +273,10 @@ export default function Home() {
     }
   }
 
+  // Fetch all posts
   const fetchAllPosts = async () => {
     try {
+      // WeaveDB SDK query to fetch all documents from the database with the given collection name
       const _posts = await db.cget(COLLECTION_POSTS)
       setPosts(_posts)
       console.log("fetchAllPosts", _posts)
@@ -265,8 +292,10 @@ export default function Home() {
     }
   }
 
+  // Fetch posts created by the logged-in user
   const fetchUserPosts = async () => {
     try {
+      // WeaveDB SDK query to fetch all documents from the database with the given collection name, where the 'user_wallet' field matches 'user.signer'
       const _posts = await db.cget(COLLECTION_POSTS, [
         "user_wallet",
         "==",
@@ -288,6 +317,7 @@ export default function Home() {
 
   const login = async () => {
     try {
+      // WeaveDB SDK query to internally link a temporary address to the signer wallet
       const { tx, identity } = await db.createTempAddress()
       console.log("login", tx)
       setUser(identity)
@@ -313,6 +343,7 @@ export default function Home() {
   const addPost = async () => {
     try {
       console.log("post", post)
+      // WeaveDB SDK query to add a new document to the database
       const tx = await db.add(
         {
           body: post,
@@ -354,6 +385,7 @@ export default function Home() {
 
   const deletePost = async (post) => {
     try {
+      // WeaveDB SDK query to remove a document from the database with the given document id
       const tx = await db.delete(
         COLLECTION_POSTS,
         post.id,
@@ -390,10 +422,12 @@ export default function Home() {
     }
   }
 
+  // Initialize WeaveDB when the component mounts
   useEffect(() => {
     setupWeaveDB()
   }, [])
 
+  // Fetch posts whenever 'db' is initialized or 'tab' changes
   useEffect(() => {
     if (db) fetchPosts()
   }, [db, tab])
