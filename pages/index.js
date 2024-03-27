@@ -243,6 +243,7 @@ export default function Home() {
     try {
       const _db = new WeaveDB({
         contractTxId: CONTRACT_TX_ID,
+        nocache: true
       })
       await _db.init()
       setDb(_db)
