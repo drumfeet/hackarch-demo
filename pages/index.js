@@ -23,7 +23,7 @@ import {
 
 export default function Home() {
   // Constants and state variables
-  const CONTRACT_TX_ID = "SeEKNQRppFVkyZ0BnrTIZtWfpgUbz_vtb5tUvdLlfAc"
+  const CONTRACT_TX_ID = "G9JhT7VVVFKNsb4mwueLt_wAG4bWJVJeV5Pu_It2Prs"
   const COLLECTION_POSTS = "posts"
 
   // State variable storing the weavedb-sdk object
